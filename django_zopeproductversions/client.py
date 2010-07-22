@@ -7,19 +7,23 @@ import sys
 import os.path
 from datetime import datetime, timedelta
 
-# Django Connection
+# Django connection
+crt = os.path.dirname(os.path.realpath(__file__))
+DJANGO_PATH = crt[:crt.rfind('/')]
+if DJANGO_PATH not in sys.path:
+    sys.path.append(DJANGO_PATH)
 from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
 # Django imports
-from info.models import *
+from django_zopeproductversions.models import *
 from django.db.models import Q
 
 class Client(object):
     """Our json client for grabing info"""
     rpc_log_in = 'logged_in'
-    rpc_getInstanceInfo = 'manage_getInstanceInfo'
+    rpc_getInstanceInfo = 'products.info'
 
     class MyHTTPRedirectHandler(urllib2.HTTPRedirectHandler):
         """inner class used by urllib2 to keep cookies in redirection"""

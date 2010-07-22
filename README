@@ -1,14 +1,14 @@
-DjangoAdminApp is a client for monitoring installed products on a specified list of Naaya instances.
+Django-ZopeProductVersions is a client for monitoring installed products on a specified list of Zope instances.
 Run python manage.py syncdb to setup the database.
 
-Log in to admin panel and add Naaya websites in the Info/ZopeInstances section.
-Enter url and user+password for a manager account in your Naaya website.
+Log in to admin panel and add Zope websites in the Info/ZopeInstances section.
+Enter url and user+password for a manager account in your Zope website.
 Also include "python client.py" in your crontab to grab info daily.
 
 You can run python client.py <instance_id> to force grabing for an instance.
 
-DjangopAdminApp helps you to view stats about installed products in your naaya websites.
+Django-ZopeProductVersions helps you to view stats about installed products in your Zope websites.
 All you need to do is update products in one website and you will then get 
 notified here for websites using the same product, but older version.
 
-Note: Your Naaya version needs to contain the /manage_getInstanceInfo script
+REQUIREMENT: Your Zope needs edw.productsinfo egg installed

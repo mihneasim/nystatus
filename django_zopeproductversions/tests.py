@@ -13,7 +13,7 @@ import settings
 setup_environ(settings)
 
 # Django imports
-from info.models import *
+from django_zopeproductversions.models import *
 
 # My imports
 from client import Client
