@@ -1,5 +1,12 @@
 from models import *
 from django.contrib import admin
+from django.forms import ModelForm, CharField, PasswordInput
+
+class ZopeInstanceForm(ModelForm):
+    password = CharField(label='Password',
+                         widget=PasswordInput(render_value=False))
+    class Meta:
+        model = ZopeInstance
 
 class OnlineProductInline(admin.TabularInline):
     model = OnlineProduct
@@ -18,6 +25,7 @@ class ZopeInstanceAdmin(admin.ModelAdmin):
     list_filter = ('status', )
     ordering = ('instance_name', '-date_checked', '-no_products')
     inlines = (OnlineProductInline, )
+    form = ZopeInstanceForm
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'origin', 'latest_found_version',
