@@ -4,9 +4,8 @@ class ZopeInstance(models.Model):
     instance_name = models.CharField(max_length=30)
     url = models.URLField()
     private_key = models.CharField('Edw productsinfo key', max_length=80,
-         help_text=("Log into ZMI and in Root click the Properties Tab."
-                     " Copy and paste here the edw-productsinfo-key for auth
-                     purposes."))
+         help_text=("Log into ZMI and in Root click the Properties Tab. "
+                    "Copy and paste here the edw-productsinfo-key for auth purposes."))
     date_added = models.DateField(auto_now_add=True)
     # last time the instance has been queried for info
     date_checked = models.DateTimeField(null=True, blank=True)
