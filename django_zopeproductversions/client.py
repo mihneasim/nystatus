@@ -1,6 +1,5 @@
 # Python imports
 import simplejson as json
-from urllib import urlencode
 import urllib2
 import re
 import sys
@@ -22,15 +21,8 @@ from django.db.models import Q
 
 class Client(object):
     """Our json client for grabing info"""
-    rpc_log_in = 'logged_in'
+    rpc_log_in = 'logged_in' # not used
     rpc_getInstanceInfo = 'products.info'
-
-    class MyHTTPRedirectHandler(urllib2.HTTPRedirectHandler):
-        """inner class used by urllib2 to keep cookies in redirection"""
-        def http_error_302(self, req, fp, code, msg, headers):
-            return urllib2.HTTPRedirectHandler.http_error_302(self,
-                               req, fp, code, msg, headers)
-        http_error_301 = http_error_303 = http_error_307 = http_error_302
 
     def updateInfo(self, instance_id):
         """Downloads current status of installed products
@@ -49,35 +41,31 @@ class Client(object):
         states whether the Product list should be saved by updateProducts
 
         Some grabs could return fake empty products results
-        e.g. when logging in fails, so always check Boolean
+        e.g. when key auth fails, so always check Boolean
 
         """
         if instance.url[-1:] != '/':
             instance.url += '/'
-        cookieprocessor = urllib2.HTTPCookieProcessor()
-        opener = urllib2.build_opener(self.MyHTTPRedirectHandler, cookieprocessor)
-        urllib2.install_opener(opener)
         try:
             h = urllib2.urlopen(
-                instance.url + self.rpc_log_in,
-                urlencode({'submit': 'Login', '__ac_name': instance.user,
-                    '__ac_password': instance.password, 'came_from':
-                    instance.url + self.rpc_getInstanceInfo})
-                )
+                instance.url + self.rpc_getInstanceInfo + '/' +
+                instance.private_key)
         except Exception, e:
             instance.status = 'Can not connect to remote website: ' + str(e)
             instance.date_checked = datetime.now()
             instance.save()
             return ([], False)
-        if not list(cookieprocessor.cookiejar):
-            instance.status = ('Can not login. User/password incorrect or user'
-                                   ' does not have manager role')
+
+        products = json.loads(h.read())
+
+        if isinstance(products,dict):
+            message = products.popitem()
+            instance.status= 'Error: ' + str(message[1])
             instance.date_checked = datetime.now()
             instance.save()
             return ([], False)
         else:
             # we have logged in and page returned json output
-            products = json.loads(h.read())
             return (products, True)
 
     def updateProducts(self, instance, products):
