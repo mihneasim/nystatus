@@ -1,14 +1,18 @@
-Django-ZopeProductVersions is a client for monitoring installed products on a specified list of Zope instances.
+Django-ZopeProductVersions is a client for information aggregation of Zope instances.
+It:
+- monitors installed Product versions
+- keeps track of running portals
+- grabs error logs
+
 Run python manage.py syncdb to setup the database.
 
 Log in to admin panel and add Zope websites in the Info/ZopeInstances section.
-Enter url and user+password for a manager account in your Zope website.
+Enter url and edw-productsinfo-key for auth purposes.
 Also include "python client.py" in your crontab to grab info daily.
 
 You can run python client.py <instance_id> to force grabing for an instance.
 
-Django-ZopeProductVersions helps you to view stats about installed products in your Zope websites.
-All you need to do is update products in one website and you will then get 
-notified here for websites using the same product, but older version.
+Django-ZopeProductVersions helps you to view stats about installed products in
+your Zope websites and error logs classified by portals.
 
-REQUIREMENT: Your Zope needs edw.productsinfo egg installed
+REQUIREMENT: Your Zope needs edw.productsinfo-0.3 egg installed

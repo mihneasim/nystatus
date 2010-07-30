@@ -21,8 +21,9 @@ from django.db.models import Q
 
 class Client(object):
     """Our json client for grabing info"""
-    rpc_log_in = 'logged_in' # not used
-    rpc_getInstanceInfo = 'products.info'
+    rpc_getInstanceInfo = 'products.info/'
+    rpc_getPortals = 'portals.info/'
+    rpc_getErrors = 'portal.errors/'
 
     def updateInfo(self, instance_id):
         """Downloads current status of installed products
@@ -48,8 +49,7 @@ class Client(object):
             instance.url += '/'
         try:
             h = urllib2.urlopen(
-                instance.url + self.rpc_getInstanceInfo + '/' +
-                instance.private_key)
+                instance.url + self.rpc_getInstanceInfo + instance.private_key)
         except Exception, e:
             instance.status = 'Can not connect to remote website: ' + str(e)
             instance.date_checked = datetime.now()
@@ -172,17 +172,115 @@ class Client(object):
         else:
             return v2
 
+    def updatePortals(self, instance, json_str=''):
+        """Grabs existing products on a zope instance
+        and updates database
+        Always do it after at least one updateProducts
+        which normalizes instance url
+
+        """
+        if not json_str:
+            url = instance.url + self.rpc_getPortals + instance.private_key
+            try:
+                h = urllib2.urlopen(url)
+            except Exception:
+                return
+            json_str = h.read()
+        portals = json.loads(json_str)
+        if isinstance(portals, dict):
+            return
+        u = instance.url
+        portals = [ u[:u[:-1].rfind('/') + 1] + p + '/' for p in portals ]
+        # delete portals not found anymore
+        Portal.objects.filter(parent_instance=instance).exclude(url__in=portals).delete()
+        current = Portal.objects.filter(parent_instance=instance)
+        # exclude portals already in db
+        for c in current:
+            try:
+                exists = portals.index(c.url)
+                portals.pop(exists)
+            except ValueError:
+                pass
+        # insert new found portals
+        for p in portals:
+            p_obj = Portal(portal_name=p[p[:-1].rfind('/')+1:-1], url=p,
+                           parent_instance=instance)
+            p_obj.save()
+
+    def updateErrors(self, instance, portal=None, json_str=''):
+        """Grabs errors from all portals belonging to instance
+        and syncs with errors in database
+        Always do it after at least one updatePortals
+
+        """
+        if not json_str:
+           portals = Portal.objects.filter(parent_instance=instance)
+        else:
+            portals = [portal]
+        for portal in portals:
+            try:
+                if not json_str:
+                    h = urllib2.urlopen(portal.url + self.rpc_getErrors +
+                                       instance.private_key)
+                    json_str_ret = h.read()
+                else:
+                    json_str_ret = json_str
+            except Exception, e:
+                portal.status = 'Can not connect to remote site: ' + str(e)
+                portal.date_checked = datetime.now()
+                portal.save()
+                continue
+            errors = json.loads(json_str_ret)
+            if isinstance(errors,dict):
+                message = errors.popitem()
+                portal.status = 'Error: ' + str(message[1])
+                portal.date_checked = datetime.now()
+                portal.save()
+            else:
+                ids = [e['id'] for e in errors]
+                # mapping id -> object
+                e_map = dict()
+                for e in errors:
+                    e_map[e['id']] = e
+                existing = [e.error_id for e in
+                            Error.objects.filter(error_id__in=ids,
+                            portal=portal)]
+                to_insert = list(set(ids) - set(existing))
+                for e_id in to_insert:
+                    new_er = Error(error_id=e_id,
+                                   error_name=e_map[e_id]['error_name'],
+                                   error_type=e_map[e_id]['error_type'],
+                                   portal=portal,
+                                   url=portal.url + e_map[e_id]['url'],
+                                   date=datetime.fromtimestamp(float(e_map[e_id]['date'])))
+                    new_er.save()
+                portal.status = 'OK'
+                portal.no_errors += len(to_insert)
+                portal.date_checked = datetime.now()
+                portal.save()
+
 if __name__ == "__main__":
     client = Client()
     if len(sys.argv) < 2:
-        # check instances ready for update
+        # check instances ready for product update
         instances =ZopeInstance.objects.filter(
                     Q(date_checked__lte=datetime.now() - timedelta(0.9))
                     | Q(date_checked__isnull=True))
         # 0.9 - haven't been checked for almost a day - include some delay
         for i in instances:
+            # update Products' Versions info
             client.updateInfo(i.pk)
+            # update Portals running in instance
+            client.updatePortals(i)
+            # update logs from error logs for each portal in instance
+            client.updateErrors(i)
     else:
         # force update of particular instance
         instance_id = sys.argv[1] 
-        client.updateInfo(instance_id)
+        try:
+            i = ZopeInstance.objects.get(pk=instance_id)
+            client.updateInfo(instance_id)
+            client.updatePortals(i)
+            client.updateErrors(i)
+        except ZopeInstance.DoesNotExist:
+            print "Instance pk=" + i + " does not exist"
