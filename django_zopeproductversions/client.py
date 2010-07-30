@@ -25,21 +25,21 @@ class Client(object):
     rpc_getPortals = 'portals.info/'
     rpc_getErrors = 'portal.errors/'
 
-    def updateInfo(self, instance_id):
+    def update_info(self, instance_id):
         """Downloads current status of installed products
         Updates database if successful
 
         """
         instance = ZopeInstance.objects.get(pk=instance_id)
-        (products, success) = self.grabJson(instance)
+        (products, success) = self.grab_json(instance)
         if success:
-            self.updateProducts(instance,products)
-        # grabJson handles error if not successful
+            self.update_products(instance,products)
+        # grab_json handles error if not successful
         # and saves error log in instance.status, no action required here
- 
-    def grabJson(self, instance):
+
+    def grab_json(self, instance):
         """Returns (Products,Boolean) where Boolean
-        states whether the Product list should be saved by updateProducts
+        states whether the Product list should be saved by update_products
 
         Some grabs could return fake empty products results
         e.g. when key auth fails, so always check Boolean
@@ -68,7 +68,7 @@ class Client(object):
             # we have logged in and page returned json output
             return (products, True)
 
-    def updateProducts(self, instance, products):
+    def update_products(self, instance, products):
         """Receives a list of current installed products
         Must update database to be conform
 
@@ -87,7 +87,7 @@ class Client(object):
                 p['origin'] = 'z' # Zope product
             try:
                 newp = Product.objects.get(name=p['name'])
-                latest_version = self.laterVersion(
+                latest_version = self.later_version(
                         newp.latest_found_version, p['version'])
                 if latest_version != newp.latest_found_version:
                     newp.latest_found_version = latest_version
@@ -135,7 +135,7 @@ class Client(object):
         instance.date_checked = datetime.now()
         instance.save()
 
-    def cmpVersions(self, v1, v2):
+    def cmp_versions(self, v1, v2):
         """Compares two strings representing
         software versions. Returns 1,-1, or 0
         for gt >, lt <, eq = relations between v1 and v2
@@ -164,18 +164,18 @@ class Client(object):
         else:
             return 0
 
-    def laterVersion(self, v1, v2):
+    def later_version(self, v1, v2):
         """return the later version"""
-        compare = self.cmpVersions(v1,v2)
+        compare = self.cmp_versions(v1,v2)
         if compare == 1:
             return v1
         else:
             return v2
 
-    def updatePortals(self, instance, json_str=''):
+    def update_portals(self, instance, json_str=''):
         """Grabs existing products on a zope instance
         and updates database
-        Always do it after at least one updateProducts
+        Always do it after at least one update_products
         which normalizes instance url
 
         """
@@ -207,10 +207,10 @@ class Client(object):
                            parent_instance=instance)
             p_obj.save()
 
-    def updateErrors(self, instance, portal=None, json_str=''):
+    def update_errors(self, instance, portal=None, json_str=''):
         """Grabs errors from all portals belonging to instance
         and syncs with errors in database
-        Always do it after at least one updatePortals
+        Always do it after at least one update_portals
 
         """
         if not json_str:
@@ -269,18 +269,18 @@ if __name__ == "__main__":
         # 0.9 - haven't been checked for almost a day - include some delay
         for i in instances:
             # update Products' Versions info
-            client.updateInfo(i.pk)
+            client.update_info(i.pk)
             # update Portals running in instance
-            client.updatePortals(i)
+            client.update_portals(i)
             # update logs from error logs for each portal in instance
-            client.updateErrors(i)
+            client.update_errors(i)
     else:
         # force update of particular instance
         instance_id = sys.argv[1] 
         try:
             i = ZopeInstance.objects.get(pk=instance_id)
-            client.updateInfo(instance_id)
-            client.updatePortals(i)
-            client.updateErrors(i)
+            client.update_info(instance_id)
+            client.update_portals(i)
+            client.update_errors(i)
         except ZopeInstance.DoesNotExist:
             print "Instance pk=" + i + " does not exist"

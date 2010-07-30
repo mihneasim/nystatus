@@ -60,7 +60,7 @@ class ClientTestCase(TestCase):
         self.clean_test_setup()
         self.initial_setup()
         ins = ZopeInstance.objects.get(instance_name=self.instance)
-        self.cl.updateProducts(ins,json.loads(self.json_getProducts))
+        self.cl.update_products(ins,json.loads(self.json_getProducts))
         ins = ZopeInstance.objects.get(pk=ins.pk)
         self.assertEqual(ins.up_to_date, True)
         self.assertEqual(ins.status, 'OK')
@@ -75,7 +75,7 @@ class ClientTestCase(TestCase):
         # Simulate we now have only one product
         # newer than the one existent
         only_one = '[{"version": "0.0.0-2", "name": "Fictional prod 0"}]'
-        self.cl.updateProducts(self.ins, json.loads(only_one))
+        self.cl.update_products(self.ins, json.loads(only_one))
         ins = ZopeInstance.objects.get(pk=self.ins.pk)
         self.assertEqual(self.ins.no_products, 1)
         prods = Product.objects.filter(name__startswith="Fictional prod") \
@@ -87,24 +87,24 @@ class ClientTestCase(TestCase):
         self.assertEqual(prods[1].use_count, 0)
 
     def test_3failed_grab(self):
-        (p, success) = self.cl.grabJson(self.ins)
+        (p, success) = self.cl.grab_json(self.ins)
         self.assertFalse(success)
         self.ins = ZopeInstance.objects.get(pk=self.ins.pk)
         self.assertEqual(self.ins.status.find("Can not connect"), 0)
 
     def test_4portals(self):
-        self.cl.updatePortals(self.ins, self.json_getPortals)
+        self.cl.update_portals(self.ins, self.json_getPortals)
         portals = Portal.objects.filter(parent_instance=self.ins)
         self.assertEqual(len(portals), self.pcount)
-        self.cl.updateErrors(self.ins, portals[0], self.json_getErrors)
+        self.cl.update_errors(self.ins, portals[0], self.json_getErrors)
         errors = Error.objects.filter(portal__parent_instance=self.ins)
         self.assertEqual(len(errors), self.pcount)
-        self.cl.updateErrors(self.ins, portals[0], self.json_getErrors)
+        self.cl.update_errors(self.ins, portals[0], self.json_getErrors)
         self.assertEqual(len(errors), self.pcount)
         self.clean_test_setup()
 
     def assertVersion(self,v,v_latest):
-        self.assertEqual(self.cl.laterVersion(v[0], v[1]), v_latest)
+        self.assertEqual(self.cl.later_version(v[0], v[1]), v_latest)
 
     def test_compare_versions(self):
         self.assertVersion(("0.0.0.1", "0.0.0.0.1"), "0.0.0.1")
