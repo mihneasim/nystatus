@@ -3,6 +3,7 @@ It:
 - monitors installed Product versions
 - keeps track of running portals
 - grabs error logs
+- register your commit observations
 
 Run python manage.py syncdb to setup the database.
 

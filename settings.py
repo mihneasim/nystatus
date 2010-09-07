@@ -2,6 +2,10 @@ import os.path
 
 # Django settings for DjangoAdminApp project.
 
+# path where the website resides relative to domain,
+# ending slash, unless empty string
+site_path = ''
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -47,7 +51,7 @@ MEDIA_URL = ''
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/media/'
+ADMIN_MEDIA_PREFIX = '/' + site_path + 'media/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '3cxhkh8768&^7asd&*^&*Sd6fvc!v4tp1u!a=#u0w_^_'
@@ -71,6 +75,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+    os.path.dirname(os.path.realpath(__file__)) + '/django_zopeproductversions/templates',
 )
 
 INSTALLED_APPS = (

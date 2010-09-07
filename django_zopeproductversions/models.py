@@ -65,17 +65,33 @@ class Portal(models.Model):
 class Error(models.Model):
     """One error out of an error log"""
     # model key is (error_id, portal)
-    error_id = models.CharField(max_length=40, db_index=True)
+    error_hash = models.CharField(max_length=32, db_index=True, unique=True)
     error_type = models.CharField(max_length=20, db_index=True)
     error_name = models.CharField(max_length=200)
+    count = models.PositiveIntegerField('Occurrences', default=1)
     portal = models.ForeignKey(Portal, db_index=True)
     date = models.DateTimeField()
     url = models.URLField()
     solved = models.BooleanField(default=False, db_index=True)
+    traceback = models.TextField()
+
+class Error_id(models.Model):
+    """one error may have multiple occurrences, save them here"""
+    error = models.ForeignKey(Error, db_index=True)
+    err_id = models.CharField(max_length=40, db_index=True)
 
     def url_clickable(self):
         return "<a href='%s' target='_blank'>%s</a>" % (self.url, self.url)
     url_clickable.allow_tags = True
 
     def __unicode__(self):
-        return self.error_type
+        return self.err_id
+
+class Commit(models.Model):
+    """information about a commit"""
+    number = models.CharField('Commit number', max_length=40, db_index=True,
+                              unique=True,
+                              help_text='Revision number or commit id')
+    obs = models.TextField('Observations',
+                           help_text='Please use reStructured text format')
+    date = models.DateTimeField('Date Added', auto_now_add=True)

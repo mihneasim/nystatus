@@ -1,10 +1,12 @@
 # Python imports
 import simplejson as json
 import urllib2
+from urllib import quote
 import re
 import sys
 import os.path
 from datetime import datetime, timedelta
+import hashlib
 
 # Django connection
 crt = os.path.dirname(os.path.realpath(__file__))
@@ -48,8 +50,8 @@ class Client(object):
         if instance.url[-1:] != '/':
             instance.url += '/'
         try:
-            h = urllib2.urlopen(
-                instance.url + self.rpc_getInstanceInfo + instance.private_key)
+            h = urllib2.urlopen(instance.url + quote(self.rpc_getInstanceInfo +
+				instance.private_key))
         except Exception, e:
             instance.status = 'Can not connect to remote website: ' + str(e)
             instance.date_checked = datetime.now()
@@ -107,9 +109,11 @@ class Client(object):
             try:
                 relation = OnlineProduct.objects.get(zopeinstance=instance,product=newp)
                 # can not use instance.products.add(newp), i defined a through relation
-                if not p['latest_version']:
-                    # not latest version (anymore), probably must update
+                if (p['latest_version'] != relation.latest_version or
+                    p['version'] != relation.version):
+                    # must update latest version status
                     relation.latest_version = p['latest_version']
+                    relation.version = p['version']
                     relation.save()
             except OnlineProduct.DoesNotExist:
                 relation = OnlineProduct(version=p['version'],
@@ -180,7 +184,8 @@ class Client(object):
 
         """
         if not json_str:
-            url = instance.url + self.rpc_getPortals + instance.private_key
+            url = instance.url + self.rpc_getPortals + \
+                  quote(instance.private_key)
             try:
                 h = urllib2.urlopen(url)
             except Exception:
@@ -190,7 +195,8 @@ class Client(object):
         if isinstance(portals, dict):
             return
         u = instance.url
-        portals = [ u[:u[:-1].rfind('/') + 1] + p + '/' for p in portals ]
+        # portals = [ u[:u[:-1].rfind('/') + 1] + p + '/' for p in portals ]
+        portals = [ u + 'aq_parent/' + p + '/' for p in portals ]
         # delete portals not found anymore
         Portal.objects.filter(parent_instance=instance).exclude(url__in=portals).delete()
         current = Portal.objects.filter(parent_instance=instance)
@@ -221,7 +227,7 @@ class Client(object):
             try:
                 if not json_str:
                     h = urllib2.urlopen(portal.url + self.rpc_getErrors +
-                                       instance.private_key)
+                                        quote(instance.private_key))
                     json_str_ret = h.read()
                 else:
                     json_str_ret = json_str
@@ -231,29 +237,61 @@ class Client(object):
                 portal.save()
                 continue
             errors = json.loads(json_str_ret)
-            if isinstance(errors,dict):
+            if isinstance(errors, dict):
                 message = errors.popitem()
                 portal.status = 'Error: ' + str(message[1])
                 portal.date_checked = datetime.now()
                 portal.save()
             else:
-                ids = [e['id'] for e in errors]
-                # mapping id -> object
-                e_map = dict()
+                hashes = {}
                 for e in errors:
-                    e_map[e['id']] = e
-                existing = [e.error_id for e in
-                            Error.objects.filter(error_id__in=ids,
+                    # for backwards compat with edw.productsinfo 0.3
+                    if 'traceback' not in e.keys():
+                        e['traceback'] = ''
+                    e['error_hash'] = hashlib.md5('|'.join([str(portal.pk),
+                                                           e['error_type'],
+                                                           e['error_name'],
+                                                           e['traceback']
+                                                           ])
+                                                 ).hexdigest()
+                    if e['error_hash'] in hashes.keys():
+                        hashes[e['error_hash']].append(e)
+                    else:
+                        hashes[e['error_hash']] = [e]
+                existing = [e.error_hash for e in
+                            Error.objects.filter(error_hash__in=hashes.keys(),
                             portal=portal)]
-                to_insert = list(set(ids) - set(existing))
-                for e_id in to_insert:
-                    new_er = Error(error_id=e_id,
-                                   error_name=e_map[e_id]['error_name'],
-                                   error_type=e_map[e_id]['error_type'],
+                to_insert = list(set(hashes.keys()) - set(existing))
+
+                for hash in to_insert:
+                    new_er = Error(error_hash=hash,
+                                   error_name=hashes[hash][0]['error_name'],
+                                   error_type=hashes[hash][0]['error_type'],
                                    portal=portal,
-                                   url=portal.url + e_map[e_id]['url'],
-                                   date=datetime.fromtimestamp(float(e_map[e_id]['date'])))
+                                   url=portal.url + hashes[hash][0]['url'],
+                                   date=datetime.fromtimestamp(float(hashes[hash][0]['date'])),
+                                   traceback=hashes[hash][0]['traceback'],
+                                   count=len(hashes[hash])
+                                   )
                     new_er.save()
+                    for e in hashes[hash]:
+                        new_err_id = Error_id(error=new_er,
+                                              err_id=e['id'])
+                        new_err_id.save()
+
+                for hash in existing:
+                    base_error = Error.objects.get(error_hash=hash)
+                    existing_ids = [e.err_id for e in
+                                    Error_id.objects.filter(error=base_error)]
+                    got_ids = [ e['id'] for e in hashes[hash] ]
+                    to_insert = list(set(got_ids) - set(existing_ids))
+                    base_error.count += len(to_insert)
+                    for e in hashes[hash]:
+                        if e['id'] in to_insert:
+                            new_err_id = Error_id(error=base_error,
+                                                  err_id=e['id'])
+                            new_err_id.save()
+
                 portal.status = 'OK'
                 portal.no_errors += len(to_insert)
                 portal.date_checked = datetime.now()
@@ -263,7 +301,7 @@ if __name__ == "__main__":
     client = Client()
     if len(sys.argv) < 2:
         # check instances ready for product update
-        instances =ZopeInstance.objects.filter(
+        instances = ZopeInstance.objects.filter(
                     Q(date_checked__lte=datetime.now() - timedelta(0.9))
                     | Q(date_checked__isnull=True))
         # 0.9 - haven't been checked for almost a day - include some delay
@@ -275,12 +313,20 @@ if __name__ == "__main__":
             # update logs from error logs for each portal in instance
             client.update_errors(i)
     else:
-        # force update of particular instance
-        instance_id = sys.argv[1] 
-        try:
-            i = ZopeInstance.objects.get(pk=instance_id)
-            client.update_info(instance_id)
-            client.update_portals(i)
-            client.update_errors(i)
-        except ZopeInstance.DoesNotExist:
-            print "Instance pk=" + i + " does not exist"
+	try:
+            i = int(sys.argv[1])
+
+            # force update of particular instance
+            instance_id = sys.argv[1]
+            try:
+                i = ZopeInstance.objects.get(pk=instance_id)
+                client.update_info(instance_id)
+                client.update_portals(i)
+                client.update_errors(i)
+            except ZopeInstance.DoesNotExist:
+                print "Instance pk=" + i + " does not exist"
+        except ValueError:
+            if sys.argv[1] == 'errors':
+                instances = ZopeInstance.objects.all()
+                for inst in instances:
+                    client.update_errors(inst)
