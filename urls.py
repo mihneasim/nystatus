@@ -20,7 +20,7 @@ urlpatterns = patterns('',
                              include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    (r'^' + SITE_PATH + 'productversions/zopeinstance/check/(?P<id>\d)/$',
+    (r'^' + SITE_PATH + 'admin/django_zopeproductversions/zopeinstance/check/(?P<id>\d)/$',
                             'django_zopeproductversions.views.admin_trigger'),
     (r'^' + SITE_PATH + 'admin/', include(admin.site.urls)),
     (r'^' + SITE_PATH + '$', 'django_zopeproductversions.views.index')
