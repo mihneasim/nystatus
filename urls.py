@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import *
 import django.views.generic.simple
+from settings import SITE_PATH
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -15,15 +16,16 @@ urlpatterns = patterns('',
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:
-    (r'^' + site_path + 'admin/doc/',
+    (r'^' + SITE_PATH + 'admin/doc/',
                              include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    (r'^' + site_path + 'productversions/zopeinstance/check/(?P<id>\d)/$',
+    (r'^' + SITE_PATH + 'productversions/zopeinstance/check/(?P<id>\d)/$',
                             'django_zopeproductversions.views.admin_trigger'),
-    (r'^' + site_path + 'admin/', include(admin.site.urls)),
+    (r'^' + SITE_PATH + 'admin/', include(admin.site.urls)),
+    (r'^' + SITE_PATH + '$', 'django_zopeproductversions.views.index')
 )
 
-urlpatterns += patterns('django.views.generic.simple',
-    ('^' + site_path + '/?$', 'redirect_to', {'url': 'admin/'})
-)
+#urlpatterns += patterns('django.views.generic.simple',
+#    ('^' + SITE_PATH + '/?$', 'redirect_to', {'url': 'admin/'})
+#)

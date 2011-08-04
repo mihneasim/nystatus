@@ -3,8 +3,11 @@ import os.path
 # Django settings for DjangoAdminApp project.
 
 # path where the website resides relative to domain,
-# ending slash, unless empty string
-site_path = ''
+# trailing slash, unless empty string
+# no heading slash
+SITE_PATH = 'versions/'
+#SITE_PATH = ''
+SVN_PATH = 'http://svn.eionet.europa.eu/repositories/Naaya/'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -16,7 +19,7 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = os.path.dirname(os.path.realpath(__file__)) + '/djangoadminapp_db' # Or path to database file if using sqlite3.
+DATABASE_NAME = os.path.dirname(os.path.realpath(__file__)) + '/db' # Or path to database file if using sqlite3.
 DATABASE_USER = ''             # Not used with sqlite3.
 DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
@@ -27,7 +30,7 @@ DATABASE_PORT = ''             # Set to empty string for default. Not used with 
 # although not all choices may be available on all operating systems.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'Europe/Bucharest'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -51,7 +54,7 @@ MEDIA_URL = ''
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/' + site_path + 'media/'
+ADMIN_MEDIA_PREFIX = '/' + SITE_PATH + 'media/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '3cxhkh8768&^7asd&*^&*Sd6fvc!v4tp1u!a=#u0w_^_'

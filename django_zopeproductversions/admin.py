@@ -1,36 +1,24 @@
 # Python imports
-from docutils import core
-from docutils.writers.html4css1 import Writer,HTMLTranslator
+from helpers import reSTify
+import re
 
 #Django imports
 from models import *
 from django.contrib import admin
+from django import forms
 
-class NoHeaderHTMLTranslator(HTMLTranslator):
-    def __init__(self, document):
-        HTMLTranslator.__init__(self,document)
-        self.head_prefix = ['','','','','']
-        self.body_prefix = []
-        self.body_suffix = []
-        self.stylesheet = []
-
-_w = Writer()
-_w.translator_class = NoHeaderHTMLTranslator
-
-def reSTify(string):
-    return core.publish_string(string,writer=_w)
+class ErrorInline(admin.TabularInline):
+    model = Error
+    extra = 1
+    fields = ('error_type', 'error_name', 'url', 'count', 'solved', 'date')
+    readonly_fields =  ('error_type', 'error_name',
+                        'url', 'count', 'solved', 'date')
 
 class OnlineProductInline(admin.TabularInline):
     model = OnlineProduct
     extra = 1
     fields = ('zopeinstance', 'product', 'version', 'latest_version', )
     readonly_fields = ('zopeinstance','product','version','latest_version', )
-
-class ErrorInline(admin.TabularInline):
-    model = Error
-    extra = 1
-    fields = ('error_type', 'error_name', 'url_clickable', 'solved', 'date')
-    readonly_fields =  ('error_type', 'error_name', 'url_clickable', 'solved', 'date')
 
 class ZopeInstanceAdmin(admin.ModelAdmin):
     fieldsets = [
@@ -82,19 +70,30 @@ class ErrorAdmin(admin.ModelAdmin):
         return "<a href='%s' target='_blank'>%s</a>" % (obj.url, obj.url)
     url_clickable.allow_tags = True
 
+class ValidateCommitNumber(forms.ModelForm):
+
+    class Meta:
+        model = Commit
+
+    def clean_number(self):
+        if re.match(r'r[1-9]+[0-9]*', self.data['number']) is None:
+            # not a svn revision
+            raise forms.ValidationError(("Not a valid commit (revision) "
+                                         " number. Expected r[1-9]"
+                                         "+[0-9]* format"))
+        else:
+            return self.cleaned_data['number']
+
 class CommitAdmin(admin.ModelAdmin):
-    list_display = ('number', 'obs_rst', 'date')
+    form = ValidateCommitNumber
+    list_display = ('number', 'obs_rst', 'author', 'message', 'datec', 'date')
     search_fields = ('number', 'obs')
-    ordering = ('-date', )
-    readonly_fields = ('obs_rst', )
+    ordering = ('-datec', )
+    readonly_fields = ('obs_rst', 'datec', 'author', 'message')
+    list_filter = ('author', )
 
     def obs_rst(self, obj):
         return reSTify(obj.obs)
     obs_rst.allow_tags = True
     obs_rst.short_description = 'Current observations'
 
-admin.site.register(ZopeInstance, ZopeInstanceAdmin)
-admin.site.register(Product, ProductAdmin)
-admin.site.register(Portal, PortalAdmin)
-admin.site.register(Error, ErrorAdmin)
-admin.site.register(Commit, CommitAdmin)

@@ -5,7 +5,7 @@ from urllib import quote
 import re
 import sys
 import os.path
-from datetime import datetime, timedelta
+import datetime
 import hashlib
 
 # Django connection
@@ -54,7 +54,7 @@ class Client(object):
 				instance.private_key))
         except Exception, e:
             instance.status = 'Can not connect to remote website: ' + str(e)
-            instance.date_checked = datetime.now()
+            instance.date_checked = datetime.datetime.now()
             instance.save()
             return ([], False)
 
@@ -63,7 +63,7 @@ class Client(object):
         if isinstance(products,dict):
             message = products.popitem()
             instance.status= 'Error: ' + str(message[1])
-            instance.date_checked = datetime.now()
+            instance.date_checked = datetime.datetime.now()
             instance.save()
             return ([], False)
         else:
@@ -136,7 +136,7 @@ class Client(object):
         OnlineProduct.objects.filter(zopeinstance=instance,
             product__in=removed).delete()
         instance.status = 'OK'
-        instance.date_checked = datetime.now()
+        instance.date_checked = datetime.datetime.now()
         instance.save()
 
     def cmp_versions(self, v1, v2):
@@ -233,14 +233,14 @@ class Client(object):
                     json_str_ret = json_str
             except Exception, e:
                 portal.status = 'Can not connect to remote site: ' + str(e)
-                portal.date_checked = datetime.now()
+                portal.date_checked = datetime.datetime.now()
                 portal.save()
                 continue
             errors = json.loads(json_str_ret)
             if isinstance(errors, dict):
                 message = errors.popitem()
                 portal.status = 'Error: ' + str(message[1])
-                portal.date_checked = datetime.now()
+                portal.date_checked = datetime.datetime.now()
                 portal.save()
             else:
                 hashes = {}
@@ -269,7 +269,11 @@ class Client(object):
                                    error_type=hashes[hash][0]['error_type'],
                                    portal=portal,
                                    url=portal.url + hashes[hash][0]['url'],
+<<<<<<< HEAD
                                    date=datetime.fromtimestamp(float(hashes[hash][0]['date'])),
+=======
+                                   date=datetime.datetime.fromtimestamp(float(hashes[hash][0]['date'])),
+>>>>>>> new feature: personal commit record registry
                                    traceback=hashes[hash][0]['traceback'],
                                    count=len(hashes[hash])
                                    )
@@ -294,7 +298,7 @@ class Client(object):
 
                 portal.status = 'OK'
                 portal.no_errors += len(to_insert)
-                portal.date_checked = datetime.now()
+                portal.date_checked = datetime.datetime.now()
                 portal.save()
 
 if __name__ == "__main__":
@@ -302,7 +306,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         # check instances ready for product update
         instances = ZopeInstance.objects.filter(
-                    Q(date_checked__lte=datetime.now() - timedelta(0.9))
+                    Q(date_checked__lte=datetime.datetime.now() - datetime.timedelta(0.9))
                     | Q(date_checked__isnull=True))
         # 0.9 - haven't been checked for almost a day - include some delay
         for i in instances:

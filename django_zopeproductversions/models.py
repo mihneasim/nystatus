@@ -1,4 +1,11 @@
+# Python imports
+import subprocess
+from helpers import reSTify
+import datetime
+
+# Django imports
 from django.db import models
+from settings import SVN_PATH
 
 class ZopeInstance(models.Model):
     instance_name = models.CharField(max_length=30)
@@ -90,8 +97,32 @@ class Error_id(models.Model):
 class Commit(models.Model):
     """information about a commit"""
     number = models.CharField('Commit number', max_length=40, db_index=True,
-                              unique=True,
+                              unique=True, default='r',
                               help_text='Revision number or commit id')
     obs = models.TextField('Observations',
                            help_text='Please use reStructured text format')
     date = models.DateTimeField('Date Added', auto_now_add=True)
+    # Repository related fields:
+    author = models.CharField(max_length=16)
+    message = models.TextField('Commit Message')
+    datec = models.DateTimeField('Date Commited', null=True)
+
+    def save(self):
+        if not self.id:
+            # insert action
+            # grab commit info from svn
+            self.message = ''
+            p = subprocess.Popen('svn log %s -%s' % (SVN_PATH, self.number),
+                                 shell=True,
+                                 stderr=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 close_fds=True)
+            output=p.communicate('\n')[0]
+            lines = output.split('\n')
+            firstline = lines[1]
+            chunks = firstline.split("|")
+            self.author = chunks[1].strip()
+            self.datec = ' '.join(chunks[2].strip().split(' ')[:2])
+            self.message = '<br />\n'.join(lines[3:-2])
+
+        super(Commit, self).save()
