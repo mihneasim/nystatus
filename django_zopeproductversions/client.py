@@ -269,11 +269,7 @@ class Client(object):
                                    error_type=hashes[hash][0]['error_type'],
                                    portal=portal,
                                    url=portal.url + hashes[hash][0]['url'],
-<<<<<<< HEAD
-                                   date=datetime.fromtimestamp(float(hashes[hash][0]['date'])),
-=======
                                    date=datetime.datetime.fromtimestamp(float(hashes[hash][0]['date'])),
->>>>>>> new feature: personal commit record registry
                                    traceback=hashes[hash][0]['traceback'],
                                    count=len(hashes[hash])
                                    )
