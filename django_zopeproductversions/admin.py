@@ -97,3 +97,8 @@ class CommitAdmin(admin.ModelAdmin):
     obs_rst.allow_tags = True
     obs_rst.short_description = 'Current observations'
 
+admin.site.register(ZopeInstance, ZopeInstanceAdmin)
+admin.site.register(Product, ProductAdmin)
+admin.site.register(Portal, PortalAdmin)
+admin.site.register(Error, ErrorAdmin)
+admin.site.register(Commit, CommitAdmin)
