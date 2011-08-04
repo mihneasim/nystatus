@@ -19,6 +19,7 @@ def index(self):
     commits = Commit.objects.order_by('-date')[:max_per_page]
     def put_rst(c):
         c.obs_rst = helpers.reSTify(c.obs)
+        setattr(c, 'int_number', c.number[1:])
     map(put_rst, commits)
     template = 'index.html'
     return render_to_response(template, {'commits': commits})

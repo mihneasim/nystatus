@@ -33,7 +33,7 @@ body{
 	    {% for c in commits %}
 		<tr class="{% cycle 'row1' 'row2' %}">
 		<td>
-                    <a href="https://svn.eionet.europa.eu/projects/Naaya/changeset/{{c.number}}" target="_blank">
+                    <a href="https://svn.eionet.europa.eu/projects/Naaya/changeset/{{c.int_number}}" target="_blank">
                     {{c.number}}
                     </a>
                 </td>
