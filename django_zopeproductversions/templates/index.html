@@ -32,7 +32,11 @@ body{
 	    {% autoescape off %}
 	    {% for c in commits %}
 		<tr class="{% cycle 'row1' 'row2' %}">
-		<td>{{c.number}}</td>
+		<td>
+                    <a href="https://svn.eionet.europa.eu/projects/Naaya/changeset/{{c.number}}" target="_blank">
+                    {{c.number}}
+                    </a>
+                </td>
 		<td>{{c.obs_rst}}</td>
 		<td>{{c.author}}</td>
 		<td>{{c.message}}</td>
