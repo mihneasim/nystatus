@@ -51,7 +51,7 @@ class Client(object):
             instance.url += '/'
         try:
             h = urllib2.urlopen(instance.url + quote(self.rpc_getInstanceInfo +
-				instance.private_key))
+                                                     instance.private_key))
         except Exception, e:
             instance.status = 'Can not connect to remote website: ' + str(e)
             instance.date_checked = datetime.datetime.now()
@@ -313,7 +313,7 @@ if __name__ == "__main__":
             # update logs from error logs for each portal in instance
             client.update_errors(i)
     else:
-	try:
+        try:
             i = int(sys.argv[1])
 
             # force update of particular instance
