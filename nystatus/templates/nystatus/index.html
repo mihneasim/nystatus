@@ -1,5 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01
 Transitional//EN"><html>
+{% load resthtml %}
 <head>
 <title>Extended changelog</title>
 <link type='text/css' rel='stylesheet' href='admin_media/css/base.css' />
@@ -54,12 +55,12 @@ body{
 		<!-- {% cycle 'row1' 'row2' %} -->
 		<tr class="{% cycle 'row1' 'row2' %}">
 		    <td colspan='5'>
-			{{c.obs_rst}}
+			{{c.obs|resthtml}}
 		    </td>
 		    <td colspan='4'>
 			{% if c.update_info %}
 			    Updating information:<br />
-			    {{c.update_info}}
+			    {{c.update_info|resthtml}}
 			{% endif %}
 		    </td>
 		</tr>

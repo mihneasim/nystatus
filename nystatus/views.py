@@ -17,9 +17,8 @@ def admin_trigger(self, id):
 def index(self):
     max_per_page = 50
     commits = Commit.objects.order_by('-date')[:max_per_page]
-    def put_rst(c):
-        c.obs_rst = helpers.reSTify(c.obs)
+    def prepair(c):
         setattr(c, 'int_number', c.number[1:])
-    map(put_rst, commits)
-    template = 'index.html'
+    map(prepair, commits)
+    template = 'nystatus/index.html'
     return render_to_response(template, {'commits': commits})
