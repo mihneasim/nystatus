@@ -86,16 +86,21 @@ class ValidateCommitNumber(forms.ModelForm):
 
 class CommitAdmin(admin.ModelAdmin):
     form = ValidateCommitNumber
-    list_display = ('number', 'obs_rst', 'author', 'message', 'datec', 'date')
-    search_fields = ('number', 'obs')
-    ordering = ('-datec', )
+    list_display = ('product', 'version',
+                    'number', 'record_type', #'also_affects_set',
+                    'obs_rst', 'author', 'message', 'datec',
+                    'doc_update', 'requires_update', 'update_info',
+                    'date')
+    search_fields = ('number', 'obs', 'update_info')
+    ordering = ('-datec', '-version', '-number', '-date')
     readonly_fields = ('obs_rst', 'datec', 'author', 'message')
-    list_filter = ('author', )
+    list_filter = ('record_type', 'requires_update', 'product',
+                   'author', 'doc_update')
 
     def obs_rst(self, obj):
         return reSTify(obj.obs)
     obs_rst.allow_tags = True
-    obs_rst.short_description = 'Current observations'
+    obs_rst.short_description = 'Details'
 
 admin.site.register(ZopeInstance, ZopeInstanceAdmin)
 admin.site.register(Product, ProductAdmin)

@@ -43,6 +43,9 @@ class Product(models.Model):
     def __unicode__(self):
         return self.name # + ' [' + str(self.pk) + ']'
 
+    class Meta:
+        ordering = ('name', )
+
 class OnlineProduct(models.Model):
     """Many-to-many relation between ZopeInstance and Product"""
     zopeinstance = models.ForeignKey(ZopeInstance)
@@ -96,16 +99,37 @@ class Error_id(models.Model):
 
 class Commit(models.Model):
     """information about a commit"""
-    number = models.CharField('Commit number', max_length=40, db_index=True,
+    product = models.ForeignKey(Product, db_index=True, null=True)
+    version = models.CharField(max_length=15, default='', db_index=True)
+    number = models.CharField('Last Revision', max_length=40, db_index=True,
                               unique=True, default='r',
                               help_text='Revision number or commit id')
-    obs = models.TextField('Observations',
+    obs = models.TextField('Details',
                            help_text='Please use reStructured text format')
     date = models.DateTimeField('Date Added', auto_now_add=True)
     # Repository related fields:
-    author = models.CharField(max_length=16)
+    author = models.CharField(max_length=16, db_index=True)
     message = models.TextField('Commit Message')
     datec = models.DateTimeField('Date Commited', null=True)
+
+    
+    record_type = models.CharField('Type', max_length=1, default='f',
+                                   choices=(('f', 'Feature'), ('b', 'Bug fix'),
+                                            ('r', 'Refactoring'), ('o', 'Other')
+                                           ),
+                                   db_index=True)
+    also_affects = models.ManyToManyField(Product, null=True, blank=True,
+                                          verbose_name='Other affected products',
+                                          db_index=True, related_name='affected')
+    doc_update = models.BooleanField('Documentation Updated', default=False,
+                                 help_text='Check if documentation was updated',
+                                 db_index=True)
+    requires_update = models.BooleanField('Requires Update', default=False,
+                              help_text='Check if update procedure is required',
+                              db_index=True)
+    update_info = models.TextField('Updating information', blank=True, null=True,
+                   help_text=('If `requires update`, provide full info here: '
+                              'scripts, procedures, tracebacks, common issues'))
 
     def save(self):
         if not self.id:
