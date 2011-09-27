@@ -73,7 +73,7 @@ class ErrorAdmin(admin.ModelAdmin):
 class ValidateCommitNumber(forms.ModelForm):
 
     class Meta:
-        model = Commit
+        model = Release
 
     def clean_number(self):
         if re.match(r'r[1-9]+[0-9]*', self.data['number']) is None:
@@ -84,26 +84,21 @@ class ValidateCommitNumber(forms.ModelForm):
         else:
             return self.cleaned_data['number']
 
-class CommitAdmin(admin.ModelAdmin):
+class ReleaseAdmin(admin.ModelAdmin):
     form = ValidateCommitNumber
     list_display = ('product', 'version',
                     'number', 'record_type', #'also_affects_set',
-                    'obs_rst', 'author', 'message', 'datec',
+                    'obs', 'author', 'message', 'datec',
                     'doc_update', 'requires_update', 'update_info',
                     'date')
-    search_fields = ('number', 'obs', 'update_info')
+    search_fields = ('number', 'obs', 'update_info', 'changelog')
     ordering = ('-datec', '-version', '-number', '-date')
-    readonly_fields = ('obs_rst', 'datec', 'author', 'message')
+    readonly_fields = ('changelog', 'datec', 'author', 'message', 'datev')
     list_filter = ('record_type', 'requires_update', 'product',
                    'author', 'doc_update')
-
-    def obs_rst(self, obj):
-        return reSTify(obj.obs)
-    obs_rst.allow_tags = True
-    obs_rst.short_description = 'Details'
 
 admin.site.register(ZopeInstance, ZopeInstanceAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Portal, PortalAdmin)
 admin.site.register(Error, ErrorAdmin)
-admin.site.register(Commit, CommitAdmin)
+admin.site.register(Release, ReleaseAdmin)

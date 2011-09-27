@@ -97,22 +97,30 @@ class Error_id(models.Model):
     def __unicode__(self):
         return self.err_id
 
-class Commit(models.Model):
-    """information about a commit"""
+class Release(models.Model):
+    """
+    Information about a release, including extended changelog, last revision.
+    Key is (product, version)
+
+    """
     product = models.ForeignKey(Product, db_index=True, null=True)
     version = models.CharField(max_length=15, default='', db_index=True)
+    # datev is None for unreleased
+    datev = models.DateField('Version Release Date', null=True, blank=True,
+                             default=None)
+    changelog = models.TextField(help_text='This is mirrored with package changelog')
+
+    # Repository related fields:
     number = models.CharField('Last Revision', max_length=40, db_index=True,
                               unique=True, default='r',
                               help_text='Revision number or commit id')
-    obs = models.TextField('Details',
-                           help_text='Please use reStructured text format')
-    date = models.DateTimeField('Date Added', auto_now_add=True)
-    # Repository related fields:
     author = models.CharField(max_length=16, db_index=True)
     message = models.TextField('Commit Message')
     datec = models.DateTimeField('Date Commited', null=True)
 
-    
+    # _THIS_ is actual extra changelog
+    obs = models.TextField('Detailed Information',
+                           help_text='Use reStructured text format.')
     record_type = models.CharField('Type', max_length=1, default='f',
                                    choices=(('f', 'Feature'), ('b', 'Bug fix'),
                                             ('r', 'Refactoring'), ('o', 'Other')
@@ -129,7 +137,11 @@ class Commit(models.Model):
                               db_index=True)
     update_info = models.TextField('Updating information', blank=True, null=True,
                    help_text=('If `requires update`, provide full info here: '
-                              'scripts, procedures, tracebacks, common issues'))
+                              'scripts, procedures, tracebacks, common issues.'
+                              ' Use reStructured text format.'))
+
+    # Model specific
+    date = models.DateTimeField('Last updated', auto_now=True)
 
     def save(self):
         if not self.id:
@@ -149,4 +161,4 @@ class Commit(models.Model):
             self.datec = ' '.join(chunks[2].strip().split(' ')[:2])
             self.message = '<br />\n'.join(lines[3:-2])
 
-        super(Commit, self).save()
+        super(Release, self).save()

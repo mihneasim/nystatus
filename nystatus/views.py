@@ -1,7 +1,7 @@
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from models import *
+from models import Release, ZopeInstance
 from client import Client
 import helpers
 
@@ -18,7 +18,7 @@ def admin_trigger(self, id):
 
 def index(request):
     max_per_page = 50
-    commits = Commit.objects.order_by('-date')[:max_per_page]
+    commits = Release.objects.order_by('-date')[:max_per_page]
     def prepair(c):
         setattr(c, 'int_number', c.number[1:])
     map(prepair, commits)

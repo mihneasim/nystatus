@@ -1,8 +1,9 @@
 # Python imports
 import sys
 import os.path
-from unittest import TestCase, TestSuite, main, makeSuite
+from django.utils import unittest
 import simplejson as json
+from datetime import date
                 
 crt = os.path.dirname(os.path.realpath(__file__))
 DJANGO_PATH = crt[:crt.rfind('/')]
@@ -17,8 +18,9 @@ from nystatus.models import *
 
 # My imports
 from client import Client
+from ChangelogClient import ChangelogClient
 
-class ClientTestCase(TestCase):
+class ClientTestCase(unittest.TestCase):
     instance = 'xxxTesting Instancexxx'
     url = 'http://testing.test'
     json_getProducts = ('[{"version": "0.0.0-1", "name": "Fictional prod 0"}, {"version":'
@@ -49,18 +51,19 @@ class ClientTestCase(TestCase):
         try:
             self.ins = ZopeInstance.objects.get(instance_name=self.instance)
         except Exception:
-            pass
+            self.ins = ZopeInstance(instance_name=self.instance, url=self.url)
+            self.ins.save()
+        self.cl.update_products(self.ins, json.loads(self.json_getProducts))
 
-    def initial_setup(self):
-        ins = ZopeInstance(instance_name=self.instance, url=self.url)
-        ins.save()
+    def tearDown(self):
+        Portal.objects.filter(parent_instance__instance_name__exact=self.instance).delete()        
+        OnlineProduct.objects.filter(zopeinstance__instance_name__exact=self.instance).delete()
+        Product.objects.filter(name__startswith="Fictional prod ").delete()
+        ZopeInstance.objects.filter(instance_name__exact=self.instance).delete()
+
 
     def test_0added_instance(self):
-        # make sure it's clean
-        self.clean_test_setup()
-        self.initial_setup()
         ins = ZopeInstance.objects.get(instance_name=self.instance)
-        self.cl.update_products(ins,json.loads(self.json_getProducts))
         ins = ZopeInstance.objects.get(pk=ins.pk)
         self.assertEqual(ins.up_to_date, True)
         self.assertEqual(ins.status, 'OK')
@@ -101,7 +104,6 @@ class ClientTestCase(TestCase):
         self.assertEqual(len(errors), self.pcount)
         self.cl.update_errors(self.ins, portals[0], self.json_getErrors)
         self.assertEqual(len(errors), self.pcount)
-        self.clean_test_setup()
 
     def assertVersion(self,v,v_latest):
         self.assertEqual(self.cl.later_version(v[0], v[1]), v_latest)
@@ -115,14 +117,87 @@ class ClientTestCase(TestCase):
         self.assertVersion(("22.34", "22"), "22.34")
         self.assertVersion(("22", "22.33"), "22.33")
 
-    def clean_test_setup(self):
-        Portal.objects.filter(parent_instance__instance_name__exact=self.instance).delete()        
-        OnlineProduct.objects.filter(zopeinstance__instance_name__exact=self.instance).delete()
-        Product.objects.filter(name__startswith="Fictional prod ").delete()
-        ZopeInstance.objects.filter(instance_name__exact=self.instance).delete()
 
-def test_suite():
-    return TestSuite((makeSuite(ClientTestCase), ))
 
-if __name__=='__main__':
-    main(defaultTest='test_suite')
+class ChangelogClientTestCase(unittest.TestCase):
+
+    sample = {'changelog0': """
+1.2.6 (unreleased)
+==================
+ * Bugfix in RadioWidget.get_value
+ * Administrators can now edit answers in expired surveys
+
+1.2.5 (2011-09-23)
+==================
+ * Merge Products.NaayaSurvey and Products.NaayaWidgets into a single package
+   named "naaya-survey"
+ * Cleaned up code and fixed #666
+
+1.2.2 (2011-04-28)
+==================
+ * Last version where Products.NaayaSurvey and Products.NaayaWidgets were
+   separate packages
+
+                            """,
+
+              'changelog1': """
+
+1.3.2 (unreleased)
+==================
+
+1.3.1 (2011-10-03)
+==================
+ * Bugfix in `Administrators can now edit..`
+
+1.3.0 (2011-09-30)
+==================
+ * Another bugfix that now looks ok
+ * Bugfix in RadioWidget.get_value
+ * Administrators can now edit answers in expired surveys
+
+1.2.5 (2011-09-23)
+==================
+ * Merge Products.NaayaSurvey and Products.NaayaWidgets into a single package
+   named "naaya-survey"
+ * Cleaned up code and fixed #666
+
+1.2.2 (2011-04-28)
+==================
+ * Last version where Products.NaayaSurvey and Products.NaayaWidgets were
+   separate packages
+                            """,
+              'name': 'naaya-survey'}
+
+    def setUp(self):
+        self.product = Product(name=self.sample['name'], origin='n')
+        self.client = ChangelogClient(self.product)
+
+    def test_changelog_parser(self):
+        self.client.update_changelog(self.sample['changelog0'])
+        versions = Release.objects.filter(product=self.product)
+        indexed = {}
+        for v in versions:
+            indexed[v.version] = v
+        self.assertEqual(len(versions), 3)
+        self.assertEqual(set(indexed.keys()), set(['1.2.2', '1.2.5', '1.2.6']))
+        self.assertEqual(indexed['1.2.6'].datev, None)
+        self.assertEqual(indexed['1.2.5'].datev, date(2011, 9, 23))
+        self.assertEqual(indexed['1.2.2'].changelog, """ * Last version where Products.NaayaSurvey and Products.NaayaWidgets were
+   separate packages""")
+
+    def test_changelog_incremental_update(self):
+        self.client.update_changelog(self.sample['changelog0'])
+        # this throws DoesNotExist / MultipleValues exception unless 1 result
+        unreleased = Release.objects.get(product=self.product, datev=None)
+        unreleased.obs = 'My personal observations aka extended changelog'
+        unreleased.save()
+        self.client.update_changelog(self.sample['changelog1'])
+        indexed = {}
+        for v in versions:
+            indexed[v.version] = v
+        self.assertEqual(set(indexed.keys),
+                         set(['1.2.2', '1.2.5', '1.3.0', '1.3.1', '1.3.2']))
+        self.assertEqual(indexed['1.3.0'].obs,
+                         'My personal observations aka extended changelog')
+        self.assertEqual(indexed['1.3.0'].datev, date(2011, 9, 30))
+        self.assertEqual(indexed['1.3.2'].datev, None)
