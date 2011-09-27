@@ -1,14 +1,10 @@
 from django.conf.urls.defaults import *
 import django.views.generic.simple
-from settings import SITE_PATH
+from settings import SITE_PATH, MEDIA_ROOT
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
-
-# path where the website resides relative to domain,
-# ending slash, unless empty string
-site_path = ''
 
 urlpatterns = patterns('',
     # Example:
@@ -23,6 +19,7 @@ urlpatterns = patterns('',
     (r'^' + SITE_PATH + 'admin/nystatus/zopeinstance/check/(?P<id>\d)/$',
                             'nystatus.views.admin_trigger'),
     (r'^' + SITE_PATH + 'admin/', include(admin.site.urls)),
+    (r'^' + SITE_PATH+ 'media/(.*)', 'django.views.static.serve', {'document_root': MEDIA_ROOT}),
     (r'^' + SITE_PATH + '$', 'nystatus.views.index')
 )
 

@@ -1,0 +1,30 @@
+body{
+    width: 100%;
+    margin: 0px auto;
+    font-size: 12px;
+}
+
+.high_priority{
+    background-color: #FCD7E1;
+}
+
+.product_name{
+    font-weight: bold;
+}
+
+.out_of_focus{
+    color: #999999;
+}
+
+/* toggle boxes in table */
+tr.toggle_info{
+    display: none;
+}
+
+tr.toggle_info td{
+    padding: 0px;
+}
+tr.toggle_info td div{
+    padding: 10px;
+}
+/* END toggle boxes in table */

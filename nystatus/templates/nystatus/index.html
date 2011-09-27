@@ -3,14 +3,10 @@ Transitional//EN"><html>
 {% load resthtml %}
 <head>
 <title>Extended changelog</title>
-<link type='text/css' rel='stylesheet' href='admin_media/css/base.css' />
-<style type='text/css'>
-body{
-    width: 100%;
-    margin: 0px auto;
-    font-size: 12px;
-}
-</style>
+<link type='text/css' rel='stylesheet' href='{{ ADMIN_MEDIA_PREFIX }}css/base.css' />
+<link type='text/css' rel='stylesheet' href='{{ MEDIA_URL }}css/base.css' />
+<script type='text/javascript' src='{{ MEDIA_URL }}js/jquery.min.js'></script>
+<script type='text/javascript' src='{{ MEDIA_URL }}js/advanced_view.js'></script>
 </head>
 <body>
 <div style='padding: 2em;'>
@@ -27,43 +23,69 @@ body{
 		<th>Product</th>
 		<th>Version</th>
 		<th>Type</th>
-		<th>Requires update</th>
-		<th>Documentation update</th>
+		<th style='width: 10em;'>Requires update</th>
+		<th style='width: 10em;'>Documentation update</th>
 
-		<th>Commit ID</th>
-		<th style='width: 5em;'>Author</th>
-		<th style='width: 25em;'>Commit message</th>
-		<th>Commit date</th>
+		<th style='width: 12em;'>Last commit</th>
+		<th>Commit message</th>
 	    </thead>
 	    {% autoescape off %}
 	    {% for c in commits %}
-		<tr class="{% cycle 'row1' 'row2' %}">
-		<td>{{c.product}}</td>
+		<tr class="{% cycle 'row1' 'row2' %} changelog_row" id="recored-{{ c.pk }}">
+		<td class="product_name">{{c.product|default_if_none:'-'}}</td>
 		<td>{{c.version}}</td>
-		<td>{{c.record_type}}</td>
-		<td>{{c.requires_update}}</td>
-		<td>{{c.doc_update}}</td>
+		<td>{{c.get_record_type_display}}</td>
+		<td class="{{c.requires_update|yesno:"high_priority," }}"
+		    ><img src="{{ ADMIN_MEDIA_PREFIX }}img/admin/icon-{{ c.requires_update|yesno:"yes,no"}}.gif" />
+		    {% if c.requires_update %}
+			&nbsp; <a href="javascript:void(0);" class="toggle_update_info">toggle update info</a>
+		    {% endif %}
+		</td>
+		<td><img src="{{ ADMIN_MEDIA_PREFIX }}img/admin/icon-{{ c.doc_update|yesno:"yes,no"}}.gif" /></td>
 		<td>
                     <a href="https://svn.eionet.europa.eu/projects/Naaya/changeset/{{c.int_number}}" target="_blank">
                     {{c.number}}
                     </a>
+		    by
+		    {{c.author}}<br />
+		    <span class="out_of_focus">{{c.datec}}</span>
                 </td>
-		<td>{{c.author}}</td>
-		<td>{{c.message}}</td>
-		<td>{{c.datec}}</td>
+		<td>
+		    {{c.message}}
+		    {% if c.obs %}
+			&nbsp; <a href="javascript:void(0);" class="toggle_changelog_info">more</a>
+		    {% endif %}
+		</td>
 		</tr>
 		<!-- {% cycle 'row1' 'row2' %} -->
+		
+		{% if c.requires_update %}
+		    <tr id="update_info-{{c.pk}}" class="toggle_info" >
+			<td colspan="7">
+			<div class="high_priority">
+			    {{ c.update_info }}
+			    ASDASD 
+			</div>
+			</td>
+		    </tr>
+		{% endif %}
+	    
+		{% if c.obs %}
+		    <tr id="changelog_info-{{c.pk}}" class="toggle_info {% cycle 'row1' 'row2' %}" >
+			<td colspan="7">
+			<div>
+			    <b>Changelog {{c.product|default_if_none:""}} {{c.version}}</b><br />
+			    {{ c.obs|resthtml }}
+			</div>
+			</td>
+		    </tr>
+		{% endif %}
+		<!-- {{c.obs|resthtml}} -->
+		<!--
 		<tr class="{% cycle 'row1' 'row2' %}">
-		    <td colspan='5'>
-			{{c.obs|resthtml}}
-		    </td>
-		    <td colspan='4'>
-			{% if c.update_info %}
-			    Updating information:<br />
-			    {{c.update_info|resthtml}}
-			{% endif %}
-		    </td>
+		    
 		</tr>
+		-->
 	    {% endfor %}
 	    {% endautoescape %}
 	    </table>
