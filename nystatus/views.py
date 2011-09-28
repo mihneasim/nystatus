@@ -18,10 +18,10 @@ def admin_trigger(self, id):
 
 def index(request):
     max_per_page = 50
-    commits = Release.objects.order_by('-date')[:max_per_page]
+    releases = Release.objects.order_by('-version')[:max_per_page]
     def prepair(c):
         setattr(c, 'int_number', c.number[1:])
-    map(prepair, commits)
+    map(prepair, releases)
     template = 'nystatus/index.html'
-    return render_to_response(template, {'commits': commits},
+    return render_to_response(template, {'releases': releases},
                               context_instance=RequestContext(request))

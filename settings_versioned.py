@@ -75,7 +75,8 @@ TEMPLATE_CONTEXT_PROCESSORS = ("django.contrib.auth.context_processors.auth",
                                "django.core.context_processors.media",
                                "django.core.context_processors.static",
                                "django.contrib.messages.context_processors.messages",
-                               "nystatus.context_processors.public_settings")
+                               "nystatus.context_processors.public_settings",
+                               'django.core.context_processors.request')
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',

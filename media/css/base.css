@@ -16,6 +16,10 @@ body{
     color: #999999;
 }
 
+a img{
+    border: none;
+}
+
 /* toggle boxes in table */
 tr.toggle_info{
     display: none;

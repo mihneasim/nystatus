@@ -314,10 +314,8 @@ if __name__ == "__main__":
             client.update_errors(i)
     else:
         try:
-            i = int(sys.argv[1])
-
             # force update of particular instance
-            instance_id = sys.argv[1]
+            instance_id = int(sys.argv[1])
             try:
                 i = ZopeInstance.objects.get(pk=instance_id)
                 client.update_info(instance_id)

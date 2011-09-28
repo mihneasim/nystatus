@@ -39,6 +39,9 @@ class Product(models.Model):
     my_notes = models.TextField('Notes', blank=True)
     latest_found_version = models.CharField(max_length=15, blank=True)
     use_count = models.PositiveIntegerField(default=0)
+    changelog_path = models.CharField(max_length=255, null=True, blank=True,
+                                      default=None,
+                                      help_text='E.g. https://svn.eionet.europa.eu/repositories/Naaya/trunk/eggs/naaya-survey/HISTORY.txt')
 
     def __unicode__(self):
         return self.name # + ' [' + str(self.pk) + ']'
@@ -112,7 +115,7 @@ class Release(models.Model):
 
     # Repository related fields:
     number = models.CharField('Last Revision', max_length=40, db_index=True,
-                              unique=True, default='r',
+                              default='r',
                               help_text='Revision number or commit id')
     author = models.CharField(max_length=16, db_index=True)
     message = models.TextField('Commit Message')
@@ -120,8 +123,9 @@ class Release(models.Model):
 
     # _THIS_ is actual extra changelog
     obs = models.TextField('Detailed Information',
-                           help_text='Use reStructured text format.')
-    record_type = models.CharField('Type', max_length=1, default='f',
+                           help_text=('Write here any changes with external behavior. '
+                                      'Use reStructured text format.'))
+    record_type = models.CharField('Type', max_length=1, default='o',
                                    choices=(('f', 'Feature'), ('b', 'Bug fix'),
                                             ('r', 'Refactoring'), ('o', 'Other')
                                            ),
@@ -135,7 +139,7 @@ class Release(models.Model):
     requires_update = models.BooleanField('Requires Update', default=False,
                               help_text='Check if update procedure is required',
                               db_index=True)
-    update_info = models.TextField('Updating information', blank=True, null=True,
+    update_info = models.TextField('Update Manual', blank=True, null=True,
                    help_text=('If `requires update`, provide full info here: '
                               'scripts, procedures, tracebacks, common issues.'
                               ' Use reStructured text format.'))
@@ -143,22 +147,10 @@ class Release(models.Model):
     # Model specific
     date = models.DateTimeField('Last updated', auto_now=True)
 
-    def save(self):
-        if not self.id:
-            # insert action
-            # grab commit info from svn
-            self.message = ''
-            p = subprocess.Popen('svn log %s -%s' % (SVN_PATH, self.number),
-                                 shell=True,
-                                 stderr=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 close_fds=True)
-            output=p.communicate('\n')[0]
-            lines = output.split('\n')
-            firstline = lines[1]
-            chunks = firstline.split("|")
-            self.author = chunks[1].strip()
-            self.datec = ' '.join(chunks[2].strip().split(' ')[:2])
-            self.message = '<br />\n'.join(lines[3:-2])
 
-        super(Release, self).save()
+def Release_update_or_add(product, version, datev, changelog):
+    (rel, c) = Release.objects.get_or_create(product=product, version=version)
+    rel.datev = datev
+    rel.changelog = changelog
+    rel.save()
+    return c

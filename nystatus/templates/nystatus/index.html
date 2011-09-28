@@ -1,11 +1,20 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01
 Transitional//EN"><html>
 {% load resthtml %}
+{% load pversion %}
 <head>
 <title>Extended changelog</title>
 <link type='text/css' rel='stylesheet' href='{{ ADMIN_MEDIA_PREFIX }}css/base.css' />
 <link type='text/css' rel='stylesheet' href='{{ MEDIA_URL }}css/base.css' />
+
+ <link rel="stylesheet" href="/media/css/tipsy.css" type="text/css" media="screen" />
+
+
 <script type='text/javascript' src='{{ MEDIA_URL }}js/jquery.min.js'></script>
+<script type='text/javascript' src='{{ MEDIA_URL }}js/jquery.tipsy.js'></script>
+<script type='text/javascript' src='{{ MEDIA_URL }}js/tipdict.js'></script>
+<script type='text/javascript' src='{{ MEDIA_URL }}js/common.js'></script>
+
 <script type='text/javascript' src='{{ MEDIA_URL }}js/advanced_view.js'></script>
 </head>
 <body>
@@ -14,7 +23,7 @@ Transitional//EN"><html>
 	<hr />
 
 	    <div style='text-align: right; font-weight: bold;'>
-		<a href='admin/nystatus/commit/'>Proceed to admin &raquo;</a>
+		<a href='admin/nystatus/release/'>Proceed to admin &raquo;</a>
 	    </div>
 
 	<div style='text-align: center; margin: 0px auto;'>
@@ -22,6 +31,7 @@ Transitional//EN"><html>
 	    <thead>
 		<th>Product</th>
 		<th>Version</th>
+		<th>Release Date</th>
 		<th>Type</th>
 		<th style='width: 10em;'>Requires update</th>
 		<th style='width: 10em;'>Documentation update</th>
@@ -30,56 +40,69 @@ Transitional//EN"><html>
 		<th>Commit message</th>
 	    </thead>
 	    {% autoescape off %}
-	    {% for c in commits %}
-		<tr class="{% cycle 'row1' 'row2' %} changelog_row" id="recored-{{ c.pk }}">
-		<td class="product_name">{{c.product|default_if_none:'-'}}</td>
-		<td>{{c.version}}</td>
-		<td>{{c.get_record_type_display}}</td>
-		<td class="{{c.requires_update|yesno:"high_priority," }}"
-		    ><img src="{{ ADMIN_MEDIA_PREFIX }}img/admin/icon-{{ c.requires_update|yesno:"yes,no"}}.gif" />
-		    {% if c.requires_update %}
-			&nbsp; <a href="javascript:void(0);" class="toggle_update_info">toggle update info</a>
+	    {% for rel in releases %}
+		<tr class="{% cycle 'row1' 'row2' %} changelog_row" id="recored-{{ rel.pk }}">
+		<td class="product_name">{{rel.product|default_if_none:'-'}}</td>
+		<td>
+		    {% if request.user.is_staff%}
+		    <a href='admin/nystatus/release/{{ rel.pk }}/' class="edit_release">
+			{{rel.version|pversion}}
+		    </a>
+		    {% else %}
+		    {{rel.version|pversion}}
 		    {% endif %}
 		</td>
-		<td><img src="{{ ADMIN_MEDIA_PREFIX }}img/admin/icon-{{ c.doc_update|yesno:"yes,no"}}.gif" /></td>
+		<td>{{rel.datev|default_if_none:"unreleased"}}</td>
+		<td>{{rel.get_record_type_display}}</td>
+		<td class="{{rel.requires_update|yesno:"high_priority," }}"
+		    ><img src="{{ ADMIN_MEDIA_PREFIX }}img/admin/icon-{{ rel.requires_update|yesno:"yes,no"}}.gif" />
+		    {% if rel.requires_update %}
+			&nbsp; <a href="javascript:void(0);" class="toggle_update_info">
+			    YES <!--<img src="{{ MEDIA_URL }}img/down-arrow.png" />-->
+			</a>
+		    {% endif %}
+		</td>
+		<td><img src="{{ ADMIN_MEDIA_PREFIX }}img/admin/icon-{{ rel.doc_update|yesno:"yes,no"}}.gif" /></td>
 		<td>
-                    <a href="https://svn.eionet.europa.eu/projects/Naaya/changeset/{{c.int_number}}" target="_blank">
-                    {{c.number}}
+                    <a href="https://svn.eionet.europa.eu/projects/Naaya/changeset/{{rel.int_number}}" target="_blank">
+                    {{rel.number}}
                     </a>
 		    by
-		    {{c.author}}<br />
-		    <span class="out_of_focus">{{c.datec}}</span>
+		    {{rel.author}}<br />
+		    <span class="out_of_focus">{{rel.datec}}</span>
                 </td>
 		<td>
-		    {{c.message}}
-		    {% if c.obs %}
+		    {{rel.message}}
 			&nbsp; <a href="javascript:void(0);" class="toggle_changelog_info">more</a>
-		    {% endif %}
 		</td>
 		</tr>
 		<!-- {% cycle 'row1' 'row2' %} -->
 		
-		{% if c.requires_update %}
-		    <tr id="update_info-{{c.pk}}" class="toggle_info" >
-			<td colspan="7">
+		{% if rel.requires_update %}
+		    <tr id="update_info-{{rel.pk}}" class="toggle_info" >
+			<td colspan="8">
 			<div class="high_priority">
-			    {{ c.update_info|resthtml }}
+			    {{ rel.update_info|resthtml }}
 			</div>
 			</td>
 		    </tr>
 		{% endif %}
 	    
-		{% if c.obs %}
-		    <tr id="changelog_info-{{c.pk}}" class="toggle_info {% cycle 'row1' 'row2' %}" >
-			<td colspan="7">
-			<div>
-			    <b>Changelog {{c.product|default_if_none:""}} {{c.version}}</b><br />
-			    {{ c.obs|resthtml }}
-			</div>
-			</td>
-		    </tr>
-		{% endif %}
-		<!-- {{c.obs|resthtml}} -->
+
+		<tr id="changelog_info-{{rel.pk}}" class="toggle_info {% cycle 'row1' 'row2' %}" >
+		    <td colspan="8">
+		    <div>
+			<b>Developers Changelog {{rel.product|default_if_none:""}} {{rel.version|pversion}}</b><br />
+			{{ rel.changelog|resthtml }}
+			{% if rel.obs %}
+			    <b>Public Changelog</b><br />
+			    {{ rel.obs|resthtml }}
+			{% endif %}
+		    </div>
+		    </td>
+		</tr>
+
+		<!-- {{rel.obs|resthtml}} -->
 		<!--
 		<tr class="{% cycle 'row1' 'row2' %}">
 		    
@@ -91,7 +114,7 @@ Transitional//EN"><html>
 
 	    <div style='text-align: right; font-weight: bold;
 			margin-top: 1em;'>
-		<a href='admin/nystatus/commit/'>Proceed to admin &raquo;</a>
+		<a href='admin/nystatus/release/'>Proceed to admin &raquo;</a>
 	    </div>
 	</div>
 </div>

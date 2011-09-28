@@ -86,14 +86,18 @@ class ValidateCommitNumber(forms.ModelForm):
 
 class ReleaseAdmin(admin.ModelAdmin):
     form = ValidateCommitNumber
-    list_display = ('product', 'version',
-                    'number', 'record_type', #'also_affects_set',
-                    'obs', 'author', 'message', 'datec',
+    list_display = ('product', 'version', 'datev', 'record_type',
+
+                    'number',  #'also_affects_set',
+                    'author', 'message', 'changelog', 'datec',
+
                     'doc_update', 'requires_update', 'update_info',
+                    'obs', 
                     'date')
     search_fields = ('number', 'obs', 'update_info', 'changelog')
-    ordering = ('-datec', '-version', '-number', '-date')
-    readonly_fields = ('changelog', 'datec', 'author', 'message', 'datev')
+    ordering = ('product', '-version', '-number', '-date')
+    readonly_fields = ('product', 'version', 'datev',
+                       'number',  'datec', 'author', 'message', 'changelog',)
     list_filter = ('record_type', 'requires_update', 'product',
                    'author', 'doc_update')
 

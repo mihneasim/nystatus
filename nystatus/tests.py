@@ -15,10 +15,22 @@ setup_environ(settings)
 
 # Django imports
 from nystatus.models import *
+from nystatus.templatetags.pversion import pversion
 
 # My imports
 from client import Client
 from ChangelogClient import ChangelogClient
+
+
+def sampledata(filename):
+    f = open(os.path.join(settings.ABS_ROOT,
+                          'nystatus' + os.path.sep + 'testdata' + os.path.sep +
+                          filename),
+             'r')
+    content = f.read()
+    f.close()
+    return content
+
 
 class ClientTestCase(unittest.TestCase):
     instance = 'xxxTesting Instancexxx'
@@ -28,19 +40,7 @@ class ClientTestCase(unittest.TestCase):
     '"Fictional prod 2"}, {"version": "3.0.3-4", "name": "Fictional prod 3"}]')
     json_getPortals = ('["fake_portal0", "fake_portal1", "fake_portal2", '
                         '"fake_portal3"]')
-    json_getErrors = ('[{"date": 1280414307.3505969, "url":'
-    '"error_log/showEntry?id=1280414307.350.485226514453", "error_name":'
-    '"http://localhost:8080/destinet/as%21123d", "error_type": "NotFound","id":'
-    '"1280414307.350.485226514453"}, {"date": 1280414304.021045, "url":'
-    '"error_log/showEntry?id=1280414304.020.396680920369", "error_name":'
-    '"http://localhost:8080/destinet/as123d", "error_type": "NotFound", "id":'
-    '"1280414304.020.396680920369"}, {"date": 1280414301.4547751, "url":'
-    '"error_log/showEntry?id=1280414301.450.709259786227", "error_name":'
-    '"http://localhost:8080/destinet/asdsdfsd", "error_type": "NotFound", "id":'
-    '"1280414301.450.709259786227"}, {"date": 1280414298.7367339, "url":'
-    '"error_log/showEntry?id=1280414298.740.231762162563", "error_name":'
-    '"http://localhost:8080/destinet/asd", "error_type": "NotFound", "id":'
-    '"1280414298.740.231762162563"}]')
+    json_getErrors = sampledata('json_errors.json')
 
     pcount = 4
     ins = None
@@ -121,55 +121,13 @@ class ClientTestCase(unittest.TestCase):
 
 class ChangelogClientTestCase(unittest.TestCase):
 
-    sample = {'changelog0': """
-1.2.6 (unreleased)
-==================
- * Bugfix in RadioWidget.get_value
- * Administrators can now edit answers in expired surveys
-
-1.2.5 (2011-09-23)
-==================
- * Merge Products.NaayaSurvey and Products.NaayaWidgets into a single package
-   named "naaya-survey"
- * Cleaned up code and fixed #666
-
-1.2.2 (2011-04-28)
-==================
- * Last version where Products.NaayaSurvey and Products.NaayaWidgets were
-   separate packages
-
-                            """,
-
-              'changelog1': """
-
-1.3.2 (unreleased)
-==================
-
-1.3.1 (2011-10-03)
-==================
- * Bugfix in `Administrators can now edit..`
-
-1.3.0 (2011-09-30)
-==================
- * Another bugfix that now looks ok
- * Bugfix in RadioWidget.get_value
- * Administrators can now edit answers in expired surveys
-
-1.2.5 (2011-09-23)
-==================
- * Merge Products.NaayaSurvey and Products.NaayaWidgets into a single package
-   named "naaya-survey"
- * Cleaned up code and fixed #666
-
-1.2.2 (2011-04-28)
-==================
- * Last version where Products.NaayaSurvey and Products.NaayaWidgets were
-   separate packages
-                            """,
+    sample = {'changelog0': sampledata('changelog0.txt'),
+              'changelog1': sampledata('changelog1.txt'),
               'name': 'naaya-survey'}
 
     def setUp(self):
         self.product = Product(name=self.sample['name'], origin='n')
+        self.product.save()
         self.client = ChangelogClient(self.product)
 
     def test_changelog_parser(self):
@@ -177,13 +135,13 @@ class ChangelogClientTestCase(unittest.TestCase):
         versions = Release.objects.filter(product=self.product)
         indexed = {}
         for v in versions:
-            indexed[v.version] = v
+            indexed[pversion(v.version)] = v
         self.assertEqual(len(versions), 3)
         self.assertEqual(set(indexed.keys()), set(['1.2.2', '1.2.5', '1.2.6']))
         self.assertEqual(indexed['1.2.6'].datev, None)
         self.assertEqual(indexed['1.2.5'].datev, date(2011, 9, 23))
-        self.assertEqual(indexed['1.2.2'].changelog, """ * Last version where Products.NaayaSurvey and Products.NaayaWidgets were
-   separate packages""")
+        self.assertEqual(indexed['1.2.2'].changelog, """* Last version where Products.NaayaSurvey and Products.NaayaWidgets were
+separate packages""")
 
     def test_changelog_incremental_update(self):
         self.client.update_changelog(self.sample['changelog0'])
@@ -191,11 +149,13 @@ class ChangelogClientTestCase(unittest.TestCase):
         unreleased = Release.objects.get(product=self.product, datev=None)
         unreleased.obs = 'My personal observations aka extended changelog'
         unreleased.save()
+
         self.client.update_changelog(self.sample['changelog1'])
+        versions = Release.objects.filter(product=self.product)
         indexed = {}
         for v in versions:
-            indexed[v.version] = v
-        self.assertEqual(set(indexed.keys),
+            indexed[pversion(v.version)] = v
+        self.assertEqual(set(indexed.keys()),
                          set(['1.2.2', '1.2.5', '1.3.0', '1.3.1', '1.3.2']))
         self.assertEqual(indexed['1.3.0'].obs,
                          'My personal observations aka extended changelog')
