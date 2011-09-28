@@ -48,7 +48,7 @@ class ChangelogClient(object):
         self.changelog = None
         self.blame = {}
         if self.product.changelog_path:
-            data = re.compile(r' +([0-9]+) +\S+ +(.*)')
+            data = re.compile(r' +([0-9]+) +\S+ (.*)')
             p = subprocess.Popen('svn blame %s' % self.product.changelog_path,
                                  shell=True,
                                  stderr=subprocess.PIPE,
@@ -122,7 +122,7 @@ class ChangelogClient(object):
             else:
                 # TODO: figure out a better way to get rst of doctree
                 entries = block[1].astext().split(block.child_text_separator)
-                text = '* ' + '\n* '.join(entries)
+                text = '* ' + '\n* '.join([e.replace('\n', ' ') for e in entries])
             releases[version] = {'datev': r_date, 'changelog': text}
 
         found_versions = releases.keys()
