@@ -16,8 +16,8 @@ urlpatterns = patterns('',
                              include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    (r'^' + SITE_PATH + 'admin/nystatus/zopeinstance/check/(?P<id>\d)/$',
-                            'nystatus.views.admin_trigger'),
+    (r'^' + SITE_PATH + 'admin/nystatus/zopeinstance/check/(?P<id>\d+)/$', 'nystatus.views.admin_trigger'),
+    (r'^' + SITE_PATH + 'admin/nystatus/product/check/(?P<id>\d+)/$', 'nystatus.views.admin_product_trigger'),
     (r'^' + SITE_PATH + 'admin/', include(admin.site.urls)),
     (r'^' + SITE_PATH+ 'media/(.*)', 'django.views.static.serve', {'document_root': MEDIA_ROOT}),
     (r'^' + SITE_PATH + '$', 'nystatus.views.index')

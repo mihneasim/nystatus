@@ -39,11 +39,19 @@ class ZopeInstanceAdmin(admin.ModelAdmin):
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'origin', 'latest_found_version',
-                    'use_count', 'my_notes')
+                    'use_count', 'my_notes', 'sync_changelog',)
     search_fields = ('name', )
     list_filter = ('origin', )
     ordering = ('name', '-use_count')
     inlines = (OnlineProductInline, )
+
+    def sync_changelog(self, obj):
+        if obj.changelog_path:
+            return '<a href="check/%s/">Sync changelog</a>' % obj.pk
+        else:
+            return 'No changelog path'
+
+    sync_changelog.allow_tags = True
 
 class PortalAdmin(admin.ModelAdmin):
     list_display = ('portal_name', 'url', 'no_errors',
@@ -100,6 +108,7 @@ class ReleaseAdmin(admin.ModelAdmin):
                        'number',  'datec', 'author', 'message', 'changelog',)
     list_filter = ('record_type', 'requires_update', 'product',
                    'author', 'doc_update')
+
 
 admin.site.register(ZopeInstance, ZopeInstanceAdmin)
 admin.site.register(Product, ProductAdmin)
