@@ -7,7 +7,7 @@ Transitional//EN"><html>
 <link type='text/css' rel='stylesheet' href='{{ ADMIN_MEDIA_PREFIX }}css/base.css' />
 <link type='text/css' rel='stylesheet' href='{{ MEDIA_URL }}css/base.css' />
 
- <link rel="stylesheet" href="/media/css/tipsy.css" type="text/css" media="screen" />
+ <link rel="stylesheet" href="{{ MEDIA_URL }}css/tipsy.css" type="text/css" media="screen" />
 
 
 <script type='text/javascript' src='{{ MEDIA_URL }}js/jquery.min.js'></script>
@@ -32,7 +32,7 @@ Transitional//EN"><html>
 		<th>Product</th>
 		<th>Version</th>
 		<th>Release Date</th>
-		<th>Type</th>
+		<!--<th>Type</th>-->
 		<th style='width: 10em;'>Requires update</th>
 		<th style='width: 10em;'>Documentation update</th>
 
@@ -53,7 +53,7 @@ Transitional//EN"><html>
 		    {% endif %}
 		</td>
 		<td>{{rel.datev|default_if_none:"unreleased"}}</td>
-		<td>{{rel.get_record_type_display}}</td>
+		<!--<td>{{rel.get_record_type_display}}</td>-->
 		<td class="{{rel.requires_update|yesno:"high_priority," }}"
 		    ><img src="{{ ADMIN_MEDIA_PREFIX }}img/admin/icon-{{ rel.requires_update|yesno:"yes,no"}}.gif" />
 		    {% if rel.requires_update %}

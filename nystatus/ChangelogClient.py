@@ -22,6 +22,9 @@ from django.db.transaction import commit_on_success
 from nystatus.models import Release, Release_update_or_add, Product
 from nystatus.templatetags.pversion import unpversion, pversion
 
+# CONSTANTS
+CHANGELOG_NAME = 'CHANGELOG.rst'
+
 # Pretty rotating logger
 LOG_FILENAME = os.path.join(settings.ABS_ROOT, 'var' + os.path.sep + 'changelog_client.log')
 logger = logging.getLogger(__name__)
@@ -47,9 +50,10 @@ class ChangelogClient(object):
         self.product = product
         self.changelog = None
         self.blame = {}
-        if self.product.changelog_path:
+        if self.product.repo_path:
             data = re.compile(r' +([0-9]+) +\S+ (.*)')
-            p = subprocess.Popen('svn blame %s' % self.product.changelog_path,
+            p = subprocess.Popen(('svn blame %s/%s' %
+                                  (self.product.repo_path, CHANGELOG_NAME)),
                                  shell=True,
                                  stderr=subprocess.PIPE,
                                  stdout=subprocess.PIPE,
@@ -176,7 +180,7 @@ class ChangelogClient(object):
             release = Release.objects.get(product=self.product,
                                           version=unpversion(version))
             # get commit info from svn
-            p = subprocess.Popen('svn log %s -r%s' % (settings.SVN_PATH, revision),
+            p = subprocess.Popen('svn log %s -r%s' % (self.repo_path, revision),
                                  shell=True,
                                  stderr=subprocess.PIPE,
                                  stdout=subprocess.PIPE,
@@ -202,8 +206,8 @@ class ChangelogClient(object):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        products = Product.objects.all().exclude(changelog_path__isnull=True)
-        products = products.exclude(changelog_path='')
+        products = Product.objects.all().exclude(repo_path__isnull=True)
+        products = products.exclude(repo_path='')
         for product in products:
             cl = ChangelogClient(product)
             cl.update()

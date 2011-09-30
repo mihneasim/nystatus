@@ -46,10 +46,10 @@ class ProductAdmin(admin.ModelAdmin):
     inlines = (OnlineProductInline, )
 
     def sync_changelog(self, obj):
-        if obj.changelog_path:
+        if obj.repo_path:
             return '<a href="check/%s/">Sync changelog</a>' % obj.pk
         else:
-            return 'No changelog path'
+            return 'No repo defined'
 
     sync_changelog.allow_tags = True
 
@@ -94,7 +94,7 @@ class ValidateCommitNumber(forms.ModelForm):
 
 class ReleaseAdmin(admin.ModelAdmin):
     form = ValidateCommitNumber
-    list_display = ('product', 'version', 'datev', 'record_type',
+    list_display = ('product', 'version', 'datev',# 'record_type',
 
                     'number',  #'also_affects_set',
                     'author', 'message', 'changelog', 'datec',
@@ -106,7 +106,7 @@ class ReleaseAdmin(admin.ModelAdmin):
     ordering = ('product', '-version', '-number', '-date')
     readonly_fields = ('product', 'version', 'datev',
                        'number',  'datec', 'author', 'message', 'changelog',)
-    list_filter = ('record_type', 'requires_update', 'product',
+    list_filter = ('requires_update', 'product',
                    'author', 'doc_update')
 
 

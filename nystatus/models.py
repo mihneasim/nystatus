@@ -39,12 +39,19 @@ class Product(models.Model):
     my_notes = models.TextField('Notes', blank=True)
     latest_found_version = models.CharField(max_length=15, blank=True)
     use_count = models.PositiveIntegerField(default=0)
-    changelog_path = models.CharField(max_length=255, null=True, blank=True,
-                                      default=None,
-                                      help_text='E.g. https://svn.eionet.europa.eu/repositories/Naaya/trunk/eggs/naaya-survey/HISTORY.txt')
+    repo_type = models.CharField(max_length='3', default='svn',
+                                 choices=(('svn', 'Subversion'),))
+    repo_path = models.CharField(max_length=255, null=True, blank=True,
+                                 default=None,
+                                 help_text='For now, only Subversion URI paths, e.g. https://svn.eionet.europa.eu/repositories/Naaya/trunk/eggs/naaya-survey/')
 
     def __unicode__(self):
         return self.name # + ' [' + str(self.pk) + ']'
+
+    def save(self):
+        if self.repo_path and not self.repo_path.endswith('/'):
+            self.repo_path += '/'
+        super(Product, self).save()
 
     class Meta:
         ordering = ('name', )
@@ -125,11 +132,11 @@ class Release(models.Model):
     obs = models.TextField('Detailed Information',
                            help_text=('Write here any changes with external behavior. '
                                       'Use reStructured text format.'))
-    record_type = models.CharField('Type', max_length=1, default='o',
-                                   choices=(('f', 'Feature'), ('b', 'Bug fix'),
-                                            ('r', 'Refactoring'), ('o', 'Other')
-                                           ),
-                                   db_index=True)
+    #record_type = models.CharField('Type', max_length=1, default='o',
+    #                               choices=(('f', 'Feature'), ('b', 'Bug fix'),
+    #                                        ('r', 'Refactoring'), ('o', 'Other')
+    #                                       ),
+    #                               db_index=True)
     also_affects = models.ManyToManyField(Product, null=True, blank=True,
                                           verbose_name='Other affected products',
                                           db_index=True, related_name='affected')

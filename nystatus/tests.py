@@ -118,7 +118,6 @@ class ClientTestCase(unittest.TestCase):
         self.assertVersion(("22", "22.33"), "22.33")
 
 
-
 class ChangelogClientTestCase(unittest.TestCase):
 
     sample = {'changelog0': sampledata('changelog0.txt'),
@@ -140,8 +139,7 @@ class ChangelogClientTestCase(unittest.TestCase):
         self.assertEqual(set(indexed.keys()), set(['1.2.2', '1.2.5', '1.2.6']))
         self.assertEqual(indexed['1.2.6'].datev, None)
         self.assertEqual(indexed['1.2.5'].datev, date(2011, 9, 23))
-        self.assertEqual(indexed['1.2.2'].changelog, """* Last version where Products.NaayaSurvey and Products.NaayaWidgets were
-separate packages""")
+        self.assertEqual(indexed['1.2.2'].changelog, """* Last version where Products.NaayaSurvey and Products.NaayaWidgets were separate packages""")
 
     def test_changelog_incremental_update(self):
         self.client.update_changelog(self.sample['changelog0'])
@@ -160,4 +158,8 @@ separate packages""")
         self.assertEqual(indexed['1.3.0'].obs,
                          'My personal observations aka extended changelog')
         self.assertEqual(indexed['1.3.0'].datev, date(2011, 9, 30))
+        self.assertEqual(indexed['1.3.0'].changelog,
+                         """* Another bugfix that now looks ok
+* bugfix: Bugfix in RadioWidget.get_value
+* feature: Administrators can now edit answers in expired surveys""")
         self.assertEqual(indexed['1.3.2'].datev, None)
