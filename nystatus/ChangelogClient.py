@@ -180,7 +180,7 @@ class ChangelogClient(object):
             release = Release.objects.get(product=self.product,
                                           version=unpversion(version))
             # get commit info from svn
-            p = subprocess.Popen('svn log %s -r%s' % (self.repo_path, revision),
+            p = subprocess.Popen('svn log %s -r%s' % (self.product.repo_path, revision),
                                  shell=True,
                                  stderr=subprocess.PIPE,
                                  stdout=subprocess.PIPE,

@@ -1,3 +1,5 @@
+import subprocess
+
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
@@ -5,6 +7,7 @@ from models import Release, ZopeInstance, Product
 from client import Client
 from ChangelogClient import ChangelogClient
 import helpers
+from settings import ABS_ROOT
 
 def admin_trigger(request, id):
     client = Client()
@@ -20,9 +23,16 @@ def admin_trigger(request, id):
 def admin_product_trigger(request, id):
     # force update of particular product release and change log
     product =  Product.objects.get(pk=id)
-    client = ChangelogClient(product)
-    client.update()
+    #client = ChangelogClient(product)
+    #client.update()
 
+    p = subprocess.Popen(('%s/bin/python %s/nystatus/ChangelogClient.py %s' %
+			 (ABS_ROOT, ABS_ROOT, id)),
+			 shell=True,
+			 stderr=subprocess.PIPE,
+			 stdout=subprocess.PIPE,
+			 close_fds=True)
+    #p.wait()
     template = 'admin/trigger.html'
     return render_to_response(template, {'name': product})
 
