@@ -6,6 +6,7 @@ import re
 from models import *
 from django.contrib import admin
 from django import forms
+from nystatus.templatetags.pversion import pversion
 
 class ErrorInline(admin.TabularInline):
     model = Error
@@ -94,21 +95,34 @@ class ValidateCommitNumber(forms.ModelForm):
 
 class ReleaseAdmin(admin.ModelAdmin):
     form = ValidateCommitNumber
-    list_display = ('product', 'version', 'datev',# 'record_type',
+    list_display = ('product', 'release', 'datev',# 'record_type',
 
                     'number',  #'also_affects_set',
-                    'author', 'message', 'changelog', 'datec',
+                    'author', 'message', 'pretty_changelog', 'datec',
 
                     'doc_update', 'requires_update', 'update_info',
-                    'obs', 
-                    'date')
+                    'pretty_obs', 'date')
     search_fields = ('number', 'obs', 'update_info', 'changelog')
     ordering = ('product', '-version', '-number', '-date')
-    readonly_fields = ('product', 'version', 'datev',
-                       'number',  'datec', 'author', 'message', 'changelog',)
+    readonly_fields = ('product', 'release', 'datev',
+                       'number',  'datec', 'author', 'message',
+                       'pretty_changelog', 'pretty_obs',)
     list_filter = ('requires_update', 'product',
                    'author', 'doc_update')
 
+    def pretty_changelog(self, obj):
+        return reSTify(obj.changelog)
+    pretty_changelog.short_description = 'Changelog'
+    pretty_changelog.allow_tags = True
+
+    def pretty_obs(self, obj):
+        return reSTify(obj.obs)
+    pretty_obs.short_description = 'Changelog'
+    pretty_obs.allow_tags = True
+
+    def release(self, obj):
+        return pversion(obj.version)
+    release.admin_order_field = 'version'
 
 admin.site.register(ZopeInstance, ZopeInstanceAdmin)
 admin.site.register(Product, ProductAdmin)

@@ -107,7 +107,8 @@ class ChangelogClient(object):
         with given `changelog` multiline string
 
         """
-        docsettings = OptionParser(components=(Parser,)).get_default_values()
+        docsettings = OptionParser(components=(Parser,),
+                                   defaults={'report_level': 3}).get_default_values()
         document = new_document(u'Changelog Document Instance', docsettings)
         parser = Parser()
         parser.parse(changelog, document)
