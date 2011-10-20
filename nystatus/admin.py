@@ -100,7 +100,7 @@ class ReleaseAdmin(admin.ModelAdmin):
                     'number',  #'also_affects_set',
                     'author', 'message', 'pretty_changelog', 'datec',
 
-                    'doc_update', 'requires_update', 'update_info',
+                    'doc_update', 'requires_update', 'pretty_update_info',
                     'pretty_obs', 'date')
     search_fields = ('number', 'obs', 'update_info', 'changelog')
     ordering = ('product', '-version', '-number', '-date')
@@ -119,6 +119,11 @@ class ReleaseAdmin(admin.ModelAdmin):
         return reSTify(obj.obs)
     pretty_obs.short_description = 'Changelog'
     pretty_obs.allow_tags = True
+
+    def pretty_update_info(self, obj):
+        return reSTify(obj.update_info)
+    pretty_update_info.short_description = 'Update Manual'
+    pretty_update_info.allow_tags = True
 
     def release(self, obj):
         return pversion(obj.version)
