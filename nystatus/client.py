@@ -248,10 +248,12 @@ class Client(object):
                     # for backwards compat with edw.productsinfo 0.3
                     if 'traceback' not in e.keys():
                         e['traceback'] = ''
+                    pat = re.compile(r'0x[a-f0-9]+')
+                    traceback_in_hash = pat.sub('0xHEXHERE', e['traceback'])
                     e['error_hash'] = hashlib.md5('|'.join([str(portal.pk),
                                                            e['error_type'],
                                                            e['error_name'],
-                                                           e['traceback']
+                                                           traceback_in_hash
                                                            ])
                                                  ).hexdigest()
                     if e['error_hash'] in hashes.keys():
