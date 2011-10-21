@@ -108,7 +108,7 @@ class ChangelogClient(object):
 
         """
         docsettings = OptionParser(components=(Parser,),
-                                   defaults={'report_level': 3}).get_default_values()
+                                   defaults={'report_level': 4}).get_default_values()
         document = new_document(u'Changelog Document Instance', docsettings)
         parser = Parser()
         parser.parse(changelog, document)

@@ -72,7 +72,7 @@ class ErrorAdmin(admin.ModelAdmin):
     exclude = ('traceback', )
 
     def error_traceback(self, obj):
-        return obj.traceback.replace("\n","<br />")
+        return obj.traceback.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n","<br />")
     error_traceback.allow_tags = True
 
     def url_clickable(self, obj):
